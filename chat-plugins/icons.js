@@ -1,4 +1,4 @@
-var serverid = 'gold';
+var serverid = 'astral';
 var icons = {};
 var fs = require('fs');
 var request = require('request');
