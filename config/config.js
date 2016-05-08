@@ -11,7 +11,7 @@ exports.proxyip = false;
 // Pokemon of the Day - put a pokemon's name here to make it Pokemon of the Day
 //   The PotD will always be in the #2 slot (not #1 so it won't be a lead)
 //   in every Random Battle team.
-exports.potd = 'Lucario';
+exports.potd = '';
 
 // crash guard - write errors to log file instead of crashing
 //   This is normally not recommended - if Node wants to crash, the
@@ -156,17 +156,7 @@ exports.inactiveuserthreshold = 1000 * 60 * 60;
 exports.customavatars = {
 	//'userid': 'customavatar.png'
 'harrisonm': '01.png' ,
-'darktaco2001': '11.png' ,
-'dangmashedpotato': '197.png' ,
-'astrobot': '95.png' ,
-'republicrex1': '22.png' ,
-'pancakezz': '88.png' ,
-'extremecynthia': '091.gif' ,
-'asianpewdiepie': '0010.png' ,
-'2mlg4360noscopeyou': '564.png' ,
-'btcantgetburns': '548.gif' ,
-'battledragon': '542.gif' ,
-'pikeldeo': '599.png'
+'astrobot': '02.png'
 };
 
 // Tournament announcements
