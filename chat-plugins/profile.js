@@ -1,162 +1,146 @@
-'use strict';
-/*eslint no-restricted-modules: [0]*/
-
-let color = require('../config/color');
-let moment = require('moment');
-
-let BR = '<br>';
-let SPACE = '&nbsp;';
-let profileColor = '#24678d';
-let trainersprites = [1, 2, 101, 102, 169, 170, 265, 266, 168];
-
-/**
- * Profile constructor.
- *
- * @param {Boolean} isOnline
- * @param {Object|String} user - if isOnline then Object else String
- * @param {String} image
+/* Profile chat-plugin
+ * by jd, modified by panpawn
  */
-function Profile(isOnline, user, image) {
-	this.isOnline = isOnline || false;
-	this.user = user || null;
-	this.image = image;
-
-	this.username = Tools.escapeHTML(this.isOnline ? this.user.name : this.user);
-	this.url = Config.avatarurl || '';
-}
-
-/**
- * Create an bold html tag element.
- *
- * Example:
- * createFont('Hello World!');
- * => '<b>Hello World!</b>'
- *
- * @param {String} color
- * @param {String} text
- * @return {String}
- */
-function bold(text) {
-	return '<b>' + text + '</b>';
-}
-
-/**
- * Create an font html tag element.
- *
- * Example:
- * createFont('Hello World!', 'blue');
- * => '<font color="blue">Hello World!</font>'
- *
- * @param {String} color
- * @param {String} text
- * @return {String}
- */
-function font(color, text) {
-	return '<font color="' + color + '">' + text + '</font>';
-}
-
-/**
- * Create an img tag element.
- *
- * Example:
- * createImg('phil.png');
- * => '<img src="phil.png" height="80" width="80" align="left">'
- *
- * @param {String} link
- * @return {String}
- */
-function img(link) {
-	return '<img src="' + link + '" height="80" width="80">';
-}
-
-/**
- * Create a font html element wrap around by a bold html element.
- * Uses to `profileColor` as a color.
- * Adds a colon at the end of the text and a SPACE at the end of the element.
- *
- * Example:
- * label('Name');
- * => '<b><font color="#24678d">Name:</font></b> '
- *
- * @param {String} text
- * @return {String}
- */
-function label(text) {
-	return bold(font(profileColor, text + ':')) + SPACE;
-}
-
-function currencyName(amount) {
-	let name = " buck";
-	return amount === 1 ? name : name + "s";
-}
-
-Profile.prototype.avatar = function () {
-	if (this.isOnline) {
-		if (typeof this.image === 'string') return img(this.url + ':' + Config.port + '/avatars/' + this.image);
-		return img('http://play.pokemonshowdown.com/sprites/trainers/' + this.image + '.png');
-	}
-	for (let name in Config.customAvatars) {
-		if (this.username === name) {
-			return img(this.url + ':' + Config.port + '/avatars/' + Config.customAvatars[name]);
-		}
-	}
-	let selectedSprite = trainersprites[Math.floor(Math.random() * trainersprites.length)];
-	return img('http://play.pokemonshowdown.com/sprites/trainers/' + selectedSprite + '.png');
-};
-
-Profile.prototype.buttonAvatar = function () {
-	let css = 'border:none;background:none;padding:0;float:left;';
-	return '<button style="' + css + '" name="parseCommand" value="/user ' + this.username + '">' + this.avatar() + "</button>";
-};
-
-Profile.prototype.group = function () {
-	if (this.isOnline && this.user.group === ' ') return label('Group') + 'Regular User';
-	if (this.isOnline) return label('Group') + Config.groups[this.user.group].name;
-	for (let name in Users.usergroups) {
-		if (toId(this.username) === name) {
-			return label('Group') + Config.groups[Users.usergroups[name].charAt(0)].name;
-		}
-	}
-	return label('Group') + 'Regular User';
-};
-
-Profile.prototype.money = function (amount) {
-	return label('Money') + amount + currencyName(amount);
-};
-
-Profile.prototype.name = function () {
-	return label('Name') + bold(font(color(toId(this.username)), this.username));
-};
-
-Profile.prototype.seen = function (timeAgo) {
-	if (this.isOnline) return label('Last Seen') + font('#2ECC40', 'Currently Online');
-	if (!timeAgo) return label('Last Seen') + 'Never';
-	return label('Last Seen') + moment(timeAgo).fromNow();
-};
-
-Profile.prototype.show = function (callback) {
-	let userid = toId(this.username);
-
-	return this.buttonAvatar() +
-		SPACE + this.name() + BR +
-		SPACE + this.group() + BR +
-		SPACE + this.money(Db('money').get(userid, 0)) + BR +
-		SPACE + this.seen(Db('seen').get(userid)) +
-		'<br clear="all">';
-};
+var serverIp = '167.114.155.242';
+var http = require('http');
+var formatHex = '#566'; //hex code for the formatting of the command
+var geoip = require('geoip-ultralight');
+var moment = require('moment');
+geoip.startWatchingDataUpdate();
 
 exports.commands = {
-	profile: function (target, room, user) {
+	profile: function(target, room, user) {
+		if (!target) target = user.name;
+		if (toId(target).length > 19) return this.sendReply("Usernames may not be more than 19 characters long.");
+		if (toId(target).length < 1) return this.sendReply(target + " is not a valid username.");
 		if (!this.runBroadcast()) return;
-		if (target.length >= 19) return this.sendReply("Usernames are required to be less than 19 characters long.");
-		let targetUser = this.targetUserOrSelf(target);
-		let profile;
+
+		var targetUser = Users.get(target);
+
 		if (!targetUser) {
-			profile = new Profile(false, target);
+			var username = target;
+			var userid = toId(target);
+			var online = false;
+			var avatar = (Config.customavatars[userid] ? "http://" + serverIp + ":" + Config.port + "/avatars/" + Config.customavatars[userid] : "http://play.pokemonshowdown.com/sprites/trainers/167.png");
 		} else {
-			profile = new Profile(true, targetUser, targetUser.avatar);
+			var username = targetUser.name;
+			var userid = targetUser.userid;
+			var online = targetUser.connected;
+			var avatar = (isNaN(targetUser.avatar) ? "http://" + serverIp + ":" + Config.port + "/avatars/" + targetUser.avatar : "http://play.pokemonshowdown.com/sprites/trainers/" + targetUser.avatar + ".png");
 		}
-		this.sendReplyBox(profile.show());
+
+    	if (Users.usergroups[userid]) {
+			var userGroup = Users.usergroups[userid].substr(0,1);
+			if (Config.groups[userGroup]) userGroup = Config.groups[userGroup].name;
+		} else {
+			var userGroup = 'Regular User';
+		}
+
+		var self = this;
+		var bucks = function (user) {
+			user = toId(user);
+			if (!Economy.readMoneySync(user)) {
+				return 0;
+			} else {
+				return Economy.readMoneySync(user);
+			}
+		};
+		var regdate = "(Unregistered)";
+
+		Gold.regdate(userid, function (date) {
+			if (date) {
+				regdate = moment(date).format("dddd, MMMM DD, YYYY HH:mmA ZZ");
+			}
+			showProfile();
+		});
+
+		function getFlag (flagee) {
+			if (!Users(flagee)) return false;
+			if (Users(flagee)) {
+				var geo = geoip.lookupCountry(Users(flagee).latestIp);
+				if (!geo) {
+					return false;
+				} else {
+					return ' <img src="https://github.com/kevogod/cachechu/blob/master/flags/' + geo.toLowerCase() + '.png?raw=true" height=10 title="' + geo + '">';
+				}
+			}
+		}
+		/*
+		function getStatus (user) {
+			if (!Users(user)) return false;
+			if (Users(user)) {
+				var status = Users(users).status;
+			}
+			return status;
+		}
+		*/
+		function lastActive (user) {
+			if (!Users(user)) return false;
+			var time = Users(user).lastActive;
+			if (!time) return "hasn't talked yet";
+			if (Users(user)) {
+				var active = moment(time).fromNow();
+			}
+			return active;
+		}
+		function showProfile() {
+			var seenOutput = '';
+			if (!Gold.seenData[userid]) seenOutput = "Never";
+			var date = new Date(Gold.seenData[userid]);
+			if (Gold.seenData[userid]) {
+				seenOutput = date.toUTCString() + " ";
+				var seconds = Math.floor(((Date.now() - Gold.seenData[userid]) / 1000));
+				var minutes = Math.floor((seconds / 60));
+				var hours = Math.floor((minutes / 60));
+				var days = Math.floor((hours / 24));
+				var secondsWord = (((seconds % 60) > 1 || (seconds % 60) == 0) ? 'seconds' : 'second');
+				var minutesWord = (((minutes % 60) > 1 || (minutes % 60) == 0) ? 'minutes' : 'minute');
+				var hoursWord = ((hours > 1 || hours == 0) ? 'hours' : 'hour');
+				var daysWord = ((days === 1) ? 'day' : 'days');
+
+				if (minutes < 1) {
+					seenOutput += " (" + seconds + " " + secondsWord + " ago)";
+				}
+				if (minutes > 0 && minutes < 60) {
+					seenOutput += " (" + minutes + " " + minutesWord + " ago)";
+				}
+				if (hours > 0 && days < 1) {
+					seenOutput += " (" + hours + " " + hoursWord + " " + (minutes % 60) + " " + minutesWord + " ago)";
+				}
+				if (days > 0) {
+					seenOutput += " (" + days + " " + daysWord + " ago)";
+				}
+			}
+
+			var profile = '';
+			profile += '<img src="' + avatar + '" height=80 width=80 align=left>';
+			if (!getFlag(toId(username))) profile += '&nbsp;<font color=' + formatHex + '><b>Name:</b></font> <strong class="username">' + Gold.nameColor(username, false) + '</strong><br />';
+			if (getFlag(toId(username))) profile += '&nbsp;<font color=' + formatHex + '><b>Name:</b></font> <strong class="username">' + Gold.nameColor(username, false) + '</strong>' + getFlag(toId(username)) + '<br />';
+			profile += '&nbsp;<font color=' + formatHex + '><b>Registered:</b></font> ' + regdate + '<br />';
+			if (!Gold.hasBadge(userid,'vip')) profile += '&nbsp;<font color=' + formatHex + '><b>Rank:</b></font> ' + userGroup + '<br />';
+			if (Gold.hasBadge(userid,'vip')) profile += '&nbsp;<font color=' + formatHex + '><b>Rank:</b></font> ' + userGroup + ' (<font color=#6390F0><b>VIP User</b></font>)<br />';
+			profile += '&nbsp;<font color=' + formatHex + '><b>Bucks: </font></b>' + bucks(username) + '<br />';
+			if (online && lastActive(toId(username))) profile += '&nbsp;<font color=' + formatHex + '><b>Last Active:</b></font> ' + lastActive(toId(username)) + '<br />';
+			if (!online) profile += '&nbsp;<font color=' + formatHex + '><b>Last Online: </font></b>' + seenOutput + '<br />';
+			profile += '<br clear="all">';
+			self.sendReplyBox(profile);
+			room.update();
+		}
 	},
-	profilehelp: ["/profile -	Shows information regarding user's name, group, money, and when they were last seen."],
+	/*
+	status: function(target, room, user) {
+		if (!this.canTalk()) return;
+		var status = Tools.escapeHTML(target);
+		if (status.length > 75) return this.errorReply("Your status cannot be longer than 75 characters.");
+		user.status = status;
+		this.logModCommand(user.name + ' set their status to: ' + status);
+	},
+	clearstatus: function(target, room, user) {
+		if (!this.can('pban')) return false;
+		if (!Users(target)) return this.errorReply("User '" + target + "' not found.  Check spelling?");
+		if (!Users(target).status) return this.errorReply("Users '" + target + "' does not have a status currently set to clear.");
+		Users(target).status = false;
+		this.logModCommand(user.name + ' has reset ' + target + '\'s status.');
+	}
+	*/
 };
