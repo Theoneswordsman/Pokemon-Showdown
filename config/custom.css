@@ -1,0 +1,42 @@
+body {
+  background-image: url("http://fc01.deviantart.net/fs49/f/2009/161/f/5/Walking_the_Astral_Plane_by_KDH.png");
+  background-repeat: repeat;
+  background-position: center;
+}
+
+.header {
+  position: relative;
+  height: 50px;
+  background: url(http://play.pokemonshowdown.com/fx/client-topbar-bg.png) repeat-x left top scroll;
+}
+
+.header .logo {
+  float: left;
+  margin: 8px 0 0 -146px;
+  padding-right: 150px;
+  padding-bottom: 0;
+  background: transparent url("http://i.imgur.com/M0PNDYd.png") repeat-x scroll 0 0;
+}
+
+
+.chat-log.hasuserlist{
+background:url("http://i.imgur.com/iGQFFuZ.png");background-repeat:no-repeat;background-position:right top;background-color:#E9F3F3;opacity:1
+}
+
+
+.maintabbarbottom {
+  background: url("http://theblogboutique.com/wp-content/uploads/2010/08/free-header-art-nightly-sky-3-900-x198.jpg");
+  border-color: #FFF;
+}
+
+
+.tabbar a.button{background:url("http://theblogboutique.com/wp-content/uploads/2010/08/free-header-art-nightly-sky-3-900-x198.jpg");color:#fff;border-color:#FFF}.tabbar a.button.cur,.tabbar a.button.cur:hover{background:url("http://theblogboutique.com/wp-content/uploads/2010/08/free-header-art-nightly-sky-3-900-x198.jpg");color:#fff;border-color:#FFF;border-bottom:0;padding-top:3px;padding-bottom:5px}.maintabbarbottom{background:url("http://theblogboutique.com/wp-content/uploads/2010/08/free-header-art-nightly-sky-3-900-x198.jpg");border-color:#FFF}
+
+.ps-room.ps-room-light.scrollable {
+  color: #F9F3F3;
+  background-color: rgba(6, 255, 255, 0.8);
+  background-image: url("http://thepaperwall.com/wallpapers/space/big/big_5ba6a036d3a2e1fdd736712ebf7be314dca04fa6.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  border-left: 1px solid #0B1361;
+}
