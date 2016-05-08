@@ -155,7 +155,7 @@ exports.inactiveuserthreshold = 1000 * 60 * 60;
 // displayed in the client.
 exports.customavatars = {
 	//'userid': 'customavatar.png'
-'harrisonm': '01.png' ,
+'harrisonm': '01.gif' ,
 'astrobot': '02.png'
 };
 
