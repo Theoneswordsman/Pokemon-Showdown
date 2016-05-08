@@ -6,22 +6,20 @@
 * Credits: panpawn, TalkTakesTime, Morfent, and sirDonovan
 */
 
-'use strict';
-
 exports.commands = {
 	quoteoftheday: 'qotd',
 	qotd: function (target, room, user) {
-		if (room.id !== 'thehappyplace') return this.errorReply("This command can only be used in The Happy Place.");
+		if (room.id !== 'thehappyplace') return this.sendReply("This command can only be used in The Happy Place.");
 		if (!room.chatRoomData) return;
 		if (!target) {
-			if (!this.runBroadcast()) return;
+			if (!this.canBroadcast()) return;
 			if (!room.chatRoomData.quote) return this.sendReplyBox("The Quote of the Day has not been set.");
 			return this.sendReplyBox(
 				"The current <strong>Inspirational Quote of the Day</strong> is:<br />" +
 				"\"" + room.chatRoomData.quote + "\""
 			);
 		}
-		if (!this.can('declare', null, room)) return false;
+		if (!this.can('qotd', room)) return false;
 		if (target === 'off' || target === 'disable' || target === 'reset') {
 			if (!room.chatRoomData.quote) return this.sendReply("The Quote of the Day has already been reset.");
 			delete room.chatRoomData.quote;
@@ -41,6 +39,6 @@ exports.commands = {
 	quoteofthedayhelp: 'qotdhelp',
 	qotdhelp: [
 		"/qotd - View the current Inspirational Quote of the Day.",
-		"/qotd [quote] - Set the Inspirational Quote of the Day. Requires: # & ~",
-	],
+		"/qotd [quote] - Set the Inspirational Quote of the Dat. Requires: # & ~"
+	]
 };
